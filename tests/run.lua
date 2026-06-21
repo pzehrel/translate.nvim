@@ -17,8 +17,10 @@ end
 _G.test = test
 
 dofile("tests/config_spec.lua")
+dofile("tests/cache_spec.lua")
 dofile("tests/markdown_spec.lua")
 dofile("tests/llm_spec.lua")
+dofile("tests/llm_cache_spec.lua")
 dofile("tests/prompt_spec.lua")
 
 if failures > 0 then

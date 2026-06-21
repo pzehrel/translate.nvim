@@ -49,6 +49,7 @@ function M.messages(text, opts, source_context)
     text = text,
     file_path = source_context.file_path or "",
     extension = source_context.extension or "",
+    cache = source_context.cache or { hit = false },
   })
   if not system_prompt then
     return nil, err

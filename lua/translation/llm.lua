@@ -64,70 +64,86 @@ end
 ---@return TranslationCancel?
 function M.translate(text, opts, callback, source_context)
   local llm = opts.llm
-  if type(llm.translate) == "function" then
-    return custom_translate(llm.translate, text, opts, callback)
-  end
-
-  if llm.endpoint == "" or llm.model == "" then
-    callback("尚未配置 LLM endpoint 和 model")
-    return nil
-  end
-
-  ---@type string[]
-  local headers = {
-    "Content-Type: application/json",
-  }
-  local api_key = M.resolve_api_key(llm)
-  if api_key and api_key ~= "" then
-    table.insert(headers, "Authorization: Bearer " .. api_key)
-  end
-  for name, value in pairs(llm.headers or {}) do
-    table.insert(headers, ("%s: %s"):format(name, value))
-  end
-
+  local cache = require("translation.cache")
+  source_context = vim.tbl_extend("force", source_context or {}, {
+    cache = cache.context(text),
+  })
   local messages, prompt_err = require("translation.prompt").messages(text, opts, source_context)
   if not messages then
     callback(("System Prompt 配置错误：%s"):format(prompt_err))
     return nil
   end
+  local cache_key = cache.key(text, messages, opts)
 
-  local body = vim.json.encode({
-    model = llm.model,
-    messages = messages,
-    stream = false,
-  })
-
-  ---@type string[]
-  local command = {
-    llm.curl,
-    "--silent",
-    "--show-error",
-    "--fail-with-body",
-    "--max-time",
-    tostring(math.max(1, math.ceil(llm.timeout / 1000))),
-  }
-  for _, header in ipairs(headers) do
-    vim.list_extend(command, { "-H", header })
-  end
-  vim.list_extend(command, { "-d", body, llm.endpoint })
-
-  local process = vim.system(command, { text = true }, function(result)
-    vim.schedule(function()
-      if result.code ~= 0 then
-        callback(("LLM 请求失败：%s"):format(vim.trim(result.stderr or "")))
-        return
+  return cache.run(cache_key, function(done)
+    ---@param err string?
+    ---@param translated string?
+    local function finish(err, translated)
+      if not err and translated then
+        cache.set(cache_key, text, translated)
       end
-
-      local content, err = parse_response(result.stdout or "")
-      callback(err, content)
-    end)
-  end)
-
-  return function()
-    if process then
-      pcall(process.kill, process, 15)
+      done(err, translated)
     end
-  end
+
+    if type(llm.translate) == "function" then
+      return custom_translate(llm.translate, text, opts, finish)
+    end
+
+    if llm.endpoint == "" or llm.model == "" then
+      finish("尚未配置 LLM endpoint 和 model")
+      return nil
+    end
+
+    ---@type string[]
+    local headers = {
+      "Content-Type: application/json",
+    }
+    local api_key = M.resolve_api_key(llm)
+    if api_key and api_key ~= "" then
+      table.insert(headers, "Authorization: Bearer " .. api_key)
+    end
+    for name, value in pairs(llm.headers or {}) do
+      table.insert(headers, ("%s: %s"):format(name, value))
+    end
+
+    local body = vim.json.encode({
+      model = llm.model,
+      messages = messages,
+      stream = false,
+    })
+
+    ---@type string[]
+    local command = {
+      llm.curl,
+      "--silent",
+      "--show-error",
+      "--fail-with-body",
+      "--max-time",
+      tostring(math.max(1, math.ceil(llm.timeout / 1000))),
+    }
+    for _, header in ipairs(headers) do
+      vim.list_extend(command, { "-H", header })
+    end
+    vim.list_extend(command, { "-d", body, llm.endpoint })
+
+    local process = vim.system(command, { text = true }, function(result)
+      vim.schedule(function()
+        if result.code ~= 0 then
+          finish(("LLM 请求失败：%s"):format(vim.trim(result.stderr or "")))
+          return
+        end
+
+        local content, err = parse_response(result.stdout or "")
+        finish(err, content)
+      end)
+    end)
+
+    return function()
+      if process then
+        pcall(process.kill, process, 15)
+      end
+    end
+  end, callback)
 end
 
 return M

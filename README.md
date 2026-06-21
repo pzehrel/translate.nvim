@@ -23,6 +23,13 @@ require("translation").setup({
     model = "your-model",
     api_key_env = "LLM_API_KEY",
   },
+  cache = {
+    enabled = true,
+    max_entries = 500,
+    ttl = 30 * 60 * 1000,
+    persistence = false,
+    path = vim.fn.stdpath("cache") .. "/translation.nvim/cache.json",
+  },
 })
 ```
 
@@ -67,12 +74,30 @@ llm = {
     -- context.text
     -- context.file_path：当前 buffer 的绝对路径，未命名时为空字符串
     -- context.extension：不带点的文件扩展名，无扩展名时为空字符串
+    -- context.cache.hit：当前原文是否存在未过期的历史译文
+    -- context.cache.translation：历史译文；未命中时为 nil
     return "Translate software documentation into " .. context.target_language
   end,
 }
 ```
 
 未配置时使用插件内置的软件文档翻译 Prompt。
+
+`context.cache` 是当前原文的历史缓存提示。真正的缓存命中仍以最终 System Prompt、User 内容、模型、Endpoint 和目标语言共同计算，避免 Prompt 或模型变化后误用旧结果。
+
+## 翻译结果缓存
+
+默认启用当前 Neovim 会话内的 LRU/TTL 缓存，并合并相同的进行中请求。持久化默认关闭，可显式开启：
+
+```lua
+cache = {
+  persistence = true,
+  ttl = 7 * 24 * 60 * 60 * 1000,
+  max_entries = 1000,
+}
+```
+
+磁盘缓存只保存哈希键、原文哈希、译文和时间戳，不保存原文、文件路径、Prompt 或 API Key。写入采用防抖和临时文件原子替换；缓存文件损坏时会被忽略。
 
 ## 自行覆盖 `K`
 
@@ -110,6 +135,8 @@ require("translation").setup({
 ## 命令
 
 - `:TranslateHover`：显示双语 LSP Hover。
+- `:TranslateCacheClear`：清除翻译结果缓存。
+- `:TranslateCacheStats`：显示缓存条目、命中、未命中和进行中请求数量。
 - `:checkhealth translation`：检查运行环境和配置。
 
 ## 开发

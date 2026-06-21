@@ -24,6 +24,14 @@ local defaults = {
     curl = "curl",
     headers = {},
   },
+  cache = {
+    enabled = true,
+    max_entries = 500,
+    ttl = 30 * 60 * 1000,
+    persistence = false,
+    path = vim.fn.stdpath("cache") .. "/translation.nvim/cache.json",
+    debounce = 1500,
+  },
 }
 
 ---@type TranslationConfig

@@ -67,6 +67,29 @@ test("uses empty file context when source is unavailable", function()
   assert(received.extension == "")
 end)
 
+test("exposes current text cache to dynamic system prompt", function()
+  ---@type TranslationPromptContext?
+  local received = nil
+  assert(prompt.messages("hover text", {
+    target_language = "zh-CN",
+    llm = {
+      system_prompt = function(context)
+        received = context
+        return "translate"
+      end,
+    },
+  }, {
+    cache = {
+      hit = true,
+      translation = "缓存译文",
+    },
+  }))
+
+  assert(received ~= nil)
+  assert(received.cache.hit == true)
+  assert(received.cache.translation == "缓存译文")
+end)
+
 test("reports invalid dynamic system prompt", function()
   local invalid_prompt = function()
     return nil
