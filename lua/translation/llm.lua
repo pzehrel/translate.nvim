@@ -67,9 +67,15 @@ function M.translate(text, opts, callback)
     table.insert(headers, ("%s: %s"):format(name, value))
   end
 
+  local messages, prompt_err = require("translation.prompt").messages(text, opts)
+  if not messages then
+    callback(("System Prompt 配置错误：%s"):format(prompt_err))
+    return nil
+  end
+
   local body = vim.json.encode({
     model = llm.model,
-    messages = require("translation.prompt").messages(text, opts.target_language),
+    messages = messages,
     stream = false,
   })
 

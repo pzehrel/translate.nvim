@@ -44,6 +44,34 @@ llm = {
 }
 ```
 
+## 自定义 System Prompt
+
+`llm.system_prompt` 支持字符串：
+
+```lua
+llm = {
+  system_prompt = [[
+Translate the natural-language parts of the LSP Hover into Simplified Chinese.
+Preserve all Markdown, code, type signatures, identifiers, and links.
+Return only the translated Markdown.
+  ]],
+}
+```
+
+也支持函数，可根据目标语言和原文动态生成：
+
+```lua
+llm = {
+  system_prompt = function(context)
+    -- context.target_language
+    -- context.text
+    return "Translate software documentation into " .. context.target_language
+  end,
+}
+```
+
+未配置时使用插件内置的软件文档翻译 Prompt。
+
 ## 自行覆盖 `K`
 
 ```lua
