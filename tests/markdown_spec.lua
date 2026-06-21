@@ -1,3 +1,6 @@
+---@type fun(name: string, fn: fun())
+local test = assert(_G.test)
+
 local markdown = require("translation.markdown")
 
 test("normalizes markup content", function()

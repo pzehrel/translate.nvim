@@ -1,5 +1,8 @@
+---@class TranslationPromptModule
 local M = {}
 
+---@param context TranslationPromptContext
+---@return string
 function M.default_system_prompt(context)
   return table.concat({
     "You translate software documentation.",
@@ -11,6 +14,10 @@ function M.default_system_prompt(context)
   }, " ")
 end
 
+---@param system_prompt TranslationSystemPrompt?
+---@param context TranslationPromptContext
+---@return string? prompt
+---@return string? error
 function M.resolve_system_prompt(system_prompt, context)
   if type(system_prompt) == "function" then
     local ok, value = pcall(system_prompt, context)
@@ -30,6 +37,10 @@ function M.resolve_system_prompt(system_prompt, context)
   return M.default_system_prompt(context)
 end
 
+---@param text string
+---@param opts TranslationConfig|TranslationPromptOptions
+---@return TranslationChatMessage[]? messages
+---@return string? error
 function M.messages(text, opts)
   local system_prompt, err = M.resolve_system_prompt(opts.llm.system_prompt, {
     target_language = opts.target_language,

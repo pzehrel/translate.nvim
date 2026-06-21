@@ -1,5 +1,7 @@
+---@class TranslationConfigModule
 local M = {}
 
+---@type TranslationConfig
 local defaults = {
   target_language = "zh-CN",
   keymaps = {
@@ -24,17 +26,23 @@ local defaults = {
   },
 }
 
+---@type TranslationConfig
 local options = vim.deepcopy(defaults)
 
+---@param opts? TranslationOptions
+---@return TranslationConfig
 function M.setup(opts)
+  ---@type TranslationConfig
   options = vim.tbl_deep_extend("force", vim.deepcopy(defaults), opts or {})
   return options
 end
 
+---@return TranslationConfig
 function M.get()
   return options
 end
 
+---@return TranslationConfig
 function M.defaults()
   return vim.deepcopy(defaults)
 end

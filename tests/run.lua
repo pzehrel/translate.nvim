@@ -1,5 +1,8 @@
 local failures = 0
 
+---@param name string
+---@param fn fun()
+---@return nil
 local function test(name, fn)
   local ok, err = pcall(fn)
   if ok then
@@ -10,6 +13,7 @@ local function test(name, fn)
   end
 end
 
+---@type fun(name: string, fn: fun())
 _G.test = test
 
 dofile("tests/config_spec.lua")

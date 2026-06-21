@@ -1,5 +1,10 @@
+---@type fun(name: string, fn: fun())
+local test = assert(_G.test)
+
 test("custom llm client receives translation options", function()
+  ---@type { text: string, language: string }?
   local received = nil
+  ---@type string?
   local result = nil
   local config = require("translation.config").setup({
     target_language = "ja",
@@ -16,12 +21,14 @@ test("custom llm client receives translation options", function()
     result = translated
   end)
 
+  assert(received ~= nil)
   assert(received.text == "hello")
   assert(received.language == "ja")
   assert(result == "翻訳")
 end)
 
 test("llm client reports missing endpoint and model", function()
+  ---@type string?
   local message = nil
   local config = require("translation.config").setup({
     llm = {

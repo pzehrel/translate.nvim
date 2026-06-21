@@ -1,3 +1,6 @@
+---@type fun(name: string, fn: fun())
+local test = assert(_G.test)
+
 test("config exposes expected defaults", function()
   local config = require("translation.config")
   local defaults = config.defaults()

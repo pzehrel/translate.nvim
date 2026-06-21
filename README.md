@@ -112,9 +112,18 @@ require("translation").setup({
 
 ## 开发
 
+开发环境还需要：
+
+- StyLua
+- Luacheck
+- Lua Language Server 3.18.2+
+
+项目通过 LuaCATS 注解描述全部公开配置、回调和内部数据结构。`.luarc.json` 用于编辑器诊断，`make typecheck` 会自动加入当前 Neovim runtime 的类型定义并执行完整工作区检查。
+
 ```sh
 make format
 make lint
+make typecheck
 make test
 make check
 ```

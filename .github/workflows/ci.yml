@@ -19,9 +19,18 @@ jobs:
         with:
           version: latest
           token: ${{ secrets.GITHUB_TOKEN }}
-          args: --check lua plugin tests
+          args: --check lua plugin scripts tests
 
       - uses: lunarmodules/luacheck@v1
 
-      - run: make test
+      - name: Install LuaLS
+        run: |
+          curl -L --fail --output /tmp/luals.tar.gz \
+            https://github.com/LuaLS/lua-language-server/releases/download/3.18.2/lua-language-server-3.18.2-linux-x64.tar.gz
+          mkdir -p "$HOME/.local/share/luals"
+          tar -xzf /tmp/luals.tar.gz -C "$HOME/.local/share/luals"
+          echo "$HOME/.local/share/luals/bin" >> "$GITHUB_PATH"
 
+      - run: make typecheck
+
+      - run: make test

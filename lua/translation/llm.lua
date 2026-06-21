@@ -1,5 +1,8 @@
+---@class TranslationLlmModule
 local M = {}
 
+---@param llm TranslationLlmConfig|TranslationLlmOptions
+---@return string?
 function M.resolve_api_key(llm)
   local api_key = llm.api_key
   if type(api_key) == "function" then
@@ -21,6 +24,11 @@ function M.resolve_api_key(llm)
   return nil
 end
 
+---@param fn TranslationCustomTranslate
+---@param text string
+---@param opts TranslationConfig
+---@param callback TranslationCallback
+---@return TranslationCancel?
 local function custom_translate(fn, text, opts, callback)
   local ok, cancel_or_error = pcall(fn, text, opts, callback)
   if not ok then
@@ -30,12 +38,16 @@ local function custom_translate(fn, text, opts, callback)
   return cancel_or_error
 end
 
+---@param stdout string
+---@return string? content
+---@return string? error
 local function parse_response(stdout)
   local ok, decoded = pcall(vim.json.decode, stdout)
   if not ok then
     return nil, "LLM 返回了无效 JSON"
   end
 
+  ---@cast decoded TranslationOpenAiResponse
   local choice = decoded.choices and decoded.choices[1]
   local content = choice and choice.message and choice.message.content
   if type(content) ~= "string" or content == "" then
@@ -45,6 +57,10 @@ local function parse_response(stdout)
   return content
 end
 
+---@param text string
+---@param opts TranslationConfig
+---@param callback TranslationCallback
+---@return TranslationCancel?
 function M.translate(text, opts, callback)
   local llm = opts.llm
   if type(llm.translate) == "function" then
@@ -56,6 +72,7 @@ function M.translate(text, opts, callback)
     return nil
   end
 
+  ---@type string[]
   local headers = {
     "Content-Type: application/json",
   }
@@ -79,6 +96,7 @@ function M.translate(text, opts, callback)
     stream = false,
   })
 
+  ---@type string[]
   local command = {
     llm.curl,
     "--silent",

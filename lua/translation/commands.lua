@@ -1,5 +1,7 @@
+---@class TranslationCommandsModule
 local M = {}
 
+---@return nil
 function M.register()
   vim.api.nvim_create_user_command("TranslateHover", function()
     require("translation").hover()

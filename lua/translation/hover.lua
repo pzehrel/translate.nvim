@@ -1,9 +1,14 @@
+---@class TranslationHoverModule
 local M = {}
 
 local augroup = vim.api.nvim_create_augroup("translation.nvim", { clear = true })
 local generation = 0
+---@type TranslationCancel?
 local cancel_translation = nil
 
+---@param bufnr integer
+---@param lhs string
+---@return boolean
 local function has_buffer_mapping(bufnr, lhs)
   for _, mapping in ipairs(vim.api.nvim_buf_get_keymap(bufnr, "n")) do
     if mapping.lhs == lhs then
@@ -13,15 +18,21 @@ local function has_buffer_mapping(bufnr, lhs)
   return false
 end
 
+---@param lhs string
+---@return boolean
 local function has_global_mapping(lhs)
   local mapping = vim.fn.maparg(lhs, "n", false, true)
   return type(mapping) == "table" and next(mapping) ~= nil
 end
 
+---@param client vim.lsp.Client?
+---@return boolean
 local function supports_hover(client)
-  return client and client:supports_method("textDocument/hover")
+  return client ~= nil and client:supports_method("textDocument/hover")
 end
 
+---@param config TranslationConfig
+---@return nil
 function M.setup_keymap(config)
   vim.api.nvim_clear_autocmds({ group = augroup })
   if config.keymaps.hover == false then
@@ -31,8 +42,10 @@ function M.setup_keymap(config)
   vim.api.nvim_create_autocmd("LspAttach", {
     group = augroup,
     callback = function(event)
+      ---@cast event vim.api.keyset.create_autocmd.callback_args
       local client = vim.lsp.get_client_by_id(event.data.client_id)
       local lhs = config.keymaps.hover
+      ---@cast lhs string
       if
         not supports_hover(client)
         or has_buffer_mapping(event.buf, lhs)
@@ -49,12 +62,15 @@ function M.setup_keymap(config)
   })
 end
 
+---@param bufnr integer
+---@return lsp.TextDocumentPositionParams
 local function request_params(bufnr)
   local clients = vim.lsp.get_clients({ bufnr = bufnr, method = "textDocument/hover" })
   local encoding = clients[1] and clients[1].offset_encoding or "utf-16"
   return vim.lsp.util.make_position_params(0, encoding)
 end
 
+---@return nil
 function M.show()
   local view = require("translation.view")
   if view.focus() then
@@ -107,7 +123,7 @@ function M.show()
           view.fail(err)
           return
         end
-        view.finish(translated)
+        view.finish(assert(translated))
       end
     )
   end)

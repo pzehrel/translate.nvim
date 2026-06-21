@@ -1,3 +1,6 @@
+---@type fun(name: string, fn: fun())
+local test = assert(_G.test)
+
 local prompt = require("translation.prompt")
 
 test("uses default system prompt with target language", function()
@@ -23,6 +26,7 @@ test("accepts custom system prompt string", function()
 end)
 
 test("accepts dynamic system prompt function", function()
+  ---@type TranslationPromptContext?
   local received = nil
   local messages = assert(prompt.messages("hover text", {
     target_language = "ja",
@@ -34,18 +38,22 @@ test("accepts dynamic system prompt function", function()
     },
   }))
 
+  assert(received ~= nil)
   assert(received.text == "hover text")
   assert(received.target_language == "ja")
   assert(messages[1].content == "Translate to ja")
 end)
 
 test("reports invalid dynamic system prompt", function()
+  local invalid_prompt = function()
+    return nil
+  end
+  ---@cast invalid_prompt any
+
   local messages, err = prompt.messages("hello", {
     target_language = "zh-CN",
     llm = {
-      system_prompt = function()
-        return nil
-      end,
+      system_prompt = invalid_prompt,
     },
   })
 

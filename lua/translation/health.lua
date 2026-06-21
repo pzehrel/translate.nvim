@@ -1,5 +1,7 @@
+---@class TranslationHealthModule
 local M = {}
 
+---@return nil
 function M.check()
   vim.health.start("translation.nvim")
 
