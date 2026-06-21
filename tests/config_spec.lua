@@ -11,6 +11,9 @@ test("config exposes expected defaults", function()
   assert(defaults.cache.enabled == true)
   assert(defaults.cache.persistence == false)
   assert(defaults.cache.max_entries == 500)
+  assert(
+    defaults.cache.path == vim.fs.joinpath(vim.uv.os_tmpdir(), "translation.nvim", "cache.json")
+  )
 end)
 
 test("config setup deep merges without mutating defaults", function()

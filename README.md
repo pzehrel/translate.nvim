@@ -28,7 +28,7 @@ require("translation").setup({
     max_entries = 500,
     ttl = 30 * 60 * 1000,
     persistence = false,
-    path = vim.fn.stdpath("cache") .. "/translation.nvim/cache.json",
+    path = vim.fs.joinpath(vim.uv.os_tmpdir(), "translation.nvim", "cache.json"),
   },
 })
 ```
@@ -98,6 +98,8 @@ cache = {
 ```
 
 磁盘缓存只保存哈希键、原文哈希、译文和时间戳，不保存原文、文件路径、Prompt 或 API Key。写入采用防抖和临时文件原子替换；缓存文件损坏时会被忽略。
+
+默认目录位于操作系统临时目录下。它通常可以跨 Neovim 重启复用，但操作系统可随时清理，因此不应视为永久数据。用户仍可通过 `cache.path` 指定其他位置。
 
 ## 自行覆盖 `K`
 
