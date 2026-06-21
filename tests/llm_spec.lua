@@ -36,3 +36,29 @@ test("llm client reports missing endpoint and model", function()
 
   assert(message == "尚未配置 LLM endpoint 和 model")
 end)
+
+test("api key is read from configured environment variable", function()
+  local previous = vim.env.TRANSLATION_NVIM_TEST_KEY
+  vim.env.TRANSLATION_NVIM_TEST_KEY = "secret-from-env"
+
+  local value = require("translation.llm").resolve_api_key({
+    api_key = nil,
+    api_key_env = "TRANSLATION_NVIM_TEST_KEY",
+  })
+
+  vim.env.TRANSLATION_NVIM_TEST_KEY = previous
+  assert(value == "secret-from-env")
+end)
+
+test("explicit api key takes precedence over environment variable", function()
+  local previous = vim.env.TRANSLATION_NVIM_TEST_KEY
+  vim.env.TRANSLATION_NVIM_TEST_KEY = "secret-from-env"
+
+  local value = require("translation.llm").resolve_api_key({
+    api_key = "explicit-secret",
+    api_key_env = "TRANSLATION_NVIM_TEST_KEY",
+  })
+
+  vim.env.TRANSLATION_NVIM_TEST_KEY = previous
+  assert(value == "explicit-secret")
+end)

@@ -1,11 +1,24 @@
 local M = {}
 
-local function resolve_api_key(api_key)
+function M.resolve_api_key(llm)
+  local api_key = llm.api_key
   if type(api_key) == "function" then
     local ok, value = pcall(api_key)
-    return ok and value or nil
+    if ok and value and value ~= "" then
+      return value
+    end
+  elseif type(api_key) == "string" and api_key ~= "" then
+    return api_key
   end
-  return api_key
+
+  if type(llm.api_key_env) == "string" and llm.api_key_env ~= "" then
+    local value = vim.env[llm.api_key_env]
+    if value and value ~= "" then
+      return value
+    end
+  end
+
+  return nil
 end
 
 local function custom_translate(fn, text, opts, callback)
@@ -46,7 +59,7 @@ function M.translate(text, opts, callback)
   local headers = {
     "Content-Type: application/json",
   }
-  local api_key = resolve_api_key(llm.api_key)
+  local api_key = M.resolve_api_key(llm)
   if api_key and api_key ~= "" then
     table.insert(headers, "Authorization: Bearer " .. api_key)
   end

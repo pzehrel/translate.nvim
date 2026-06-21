@@ -3,6 +3,7 @@ test("config exposes expected defaults", function()
   local defaults = config.defaults()
   assert(defaults.target_language == "zh-CN")
   assert(defaults.keymaps.hover == "gK")
+  assert(defaults.llm.api_key_env == "LLM_API_KEY")
   assert(defaults.llm.timeout == 15000)
 end)
 

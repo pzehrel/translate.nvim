@@ -21,11 +21,27 @@ require("translation").setup({
   llm = {
     endpoint = "https://example.com/v1/chat/completions",
     model = "your-model",
-    api_key = function()
-      return os.getenv("LLM_API_KEY")
-    end,
+    api_key_env = "LLM_API_KEY",
   },
 })
+```
+
+插件默认从 `LLM_API_KEY` 环境变量读取密钥。也可以修改环境变量名：
+
+```lua
+llm = {
+  api_key_env = "OPENAI_API_KEY",
+}
+```
+
+`api_key` 仍支持字符串或回调，并且优先于 `api_key_env`：
+
+```lua
+llm = {
+  api_key = function()
+    return os.getenv("PROJECT_LLM_API_KEY")
+  end,
+}
 ```
 
 ## 自行覆盖 `K`
@@ -74,4 +90,3 @@ make lint
 make test
 make check
 ```
-

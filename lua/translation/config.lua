@@ -15,6 +15,7 @@ local defaults = {
     endpoint = "",
     model = "",
     api_key = nil,
+    api_key_env = "LLM_API_KEY",
     timeout = 15000,
     translate = nil,
     curl = "curl",
