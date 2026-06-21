@@ -137,9 +137,19 @@ require("translation").setup({
 ## 命令
 
 - `:TranslateHover`：显示双语 LSP Hover。
+- `:TranslateHover!`：跳过缓存重新翻译，成功后更新该请求的缓存。
 - `:TranslateCacheClear`：清除翻译结果缓存。
+- `:TranslateCacheDelete {原文}`：删除该原文在不同模型、Prompt 和目标语言下的缓存变体。
 - `:TranslateCacheStats`：显示缓存条目、命中、未命中和进行中请求数量。
 - `:checkhealth translation`：检查运行环境和配置。
+
+Lua API 也支持精确删除：
+
+```lua
+require("translation").delete_cache(text)      -- 按原文删除所有变体
+require("translation").delete_cache_key(key)   -- 按精确缓存键删除
+require("translation").hover({ force = true }) -- 跳过读取并重新翻译
+```
 
 ## 开发
 

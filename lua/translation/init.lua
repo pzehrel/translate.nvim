@@ -10,14 +10,27 @@ function M.setup(opts)
   return config
 end
 
+---@param opts? TranslationHoverRequestOptions
 ---@return nil
-function M.hover()
-  require("translation.hover").show()
+function M.hover(opts)
+  require("translation.hover").show(opts)
 end
 
 ---@return nil
 function M.clear_cache()
   require("translation.cache").clear()
+end
+
+---@param text string
+---@return integer deleted
+function M.delete_cache(text)
+  return require("translation.cache").delete_text(text)
+end
+
+---@param key string
+---@return boolean
+function M.delete_cache_key(key)
+  return require("translation.cache").delete_key(key)
 end
 
 ---@return TranslationCacheStats

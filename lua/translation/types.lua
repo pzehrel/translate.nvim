@@ -21,6 +21,10 @@
 ---@field file_path? string
 ---@field extension? string
 ---@field cache? TranslationPromptCacheContext
+---@field bypass_cache? boolean
+
+---@class TranslationHoverRequestOptions
+---@field force? boolean
 
 ---@class TranslationKeymapConfig
 ---@field hover string|false
@@ -141,6 +145,7 @@
 ---@field hits integer
 ---@field misses integer
 ---@field writes integer
+---@field deletes integer
 
 ---@class TranslationPersistentCache
 ---@field version integer

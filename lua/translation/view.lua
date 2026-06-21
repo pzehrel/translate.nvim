@@ -70,6 +70,14 @@ function M.fail(message)
 end
 
 ---@return nil
+function M.close()
+  if M.is_open() then
+    vim.api.nvim_win_close(assert(state.winid), true)
+  end
+  M.reset()
+end
+
+---@return nil
 function M.reset()
   state.bufnr = nil
   state.winid = nil

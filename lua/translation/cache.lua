@@ -3,7 +3,7 @@ local M = {}
 
 ---@type table<string, TranslationCacheEntry>
 local entries = {}
----@type table<string, string>
+---@type table<string, table<string, boolean>>
 local text_index = {}
 ---@type table<string, { callbacks: table<integer, TranslationCallback>, cancel: TranslationCancel? }>
 local pending = {}
@@ -17,6 +17,7 @@ local stats = {
   hits = 0,
   misses = 0,
   writes = 0,
+  deletes = 0,
 }
 
 ---@return integer
@@ -45,9 +46,21 @@ local function remove(key)
     return
   end
   entries[key] = nil
-  if text_index[entry.text_hash] == key then
-    text_index[entry.text_hash] = nil
+  local keys = text_index[entry.text_hash]
+  if keys then
+    keys[key] = nil
+    if vim.tbl_isempty(keys) then
+      text_index[entry.text_hash] = nil
+    end
   end
+end
+
+---@param entry TranslationCacheEntry
+---@return nil
+local function index(entry)
+  local keys = text_index[entry.text_hash] or {}
+  keys[entry.key] = true
+  text_index[entry.text_hash] = keys
 end
 
 ---@return nil
@@ -145,7 +158,7 @@ local function load_disk()
   for _, entry in ipairs(decoded.entries or {}) do
     if not expired(entry) then
       entries[entry.key] = entry
-      text_index[entry.text_hash] = entry.key
+      index(entry)
     end
   end
   prune()
@@ -169,18 +182,25 @@ function M.context(text)
   end
   load_disk()
   local text_hash = hash(text)
-  local key = text_index[text_hash]
-  local entry = key and entries[key] or nil
-  if not entry or expired(entry) then
-    if key then
+  local keys = text_index[text_hash]
+  local newest = nil
+  for key in pairs(keys or {}) do
+    local entry = entries[key]
+    if entry and not expired(entry) then
+      if not newest or entry.accessed_at > newest.accessed_at then
+        newest = entry
+      end
+    else
       remove(key)
     end
+  end
+  if not newest then
     return { hit = false }
   end
-  entry.accessed_at = now()
+  newest.accessed_at = now()
   return {
     hit = true,
-    translation = entry.translated,
+    translation = newest.translated,
   }
 end
 
@@ -235,7 +255,7 @@ function M.set(key, text, translated)
     accessed_at = timestamp,
     expires_at = timestamp + config.ttl,
   }
-  text_index[hash(text)] = key
+  index(entries[key])
   stats.writes = stats.writes + 1
   prune()
   schedule_write()
@@ -244,32 +264,56 @@ end
 ---@param key string
 ---@param producer fun(done: TranslationCallback): TranslationCancel?
 ---@param callback TranslationCallback
+---@param opts? { bypass: boolean?, on_success: fun(translated: string)? }
 ---@return TranslationCancel?
-function M.run(key, producer, callback)
+function M.run(key, producer, callback, opts)
+  opts = opts or {}
   if not config or not config.enabled then
-    return producer(callback)
+    return producer(function(err, translated)
+      if not err and translated and opts.on_success then
+        opts.on_success(translated)
+      end
+      callback(err, translated)
+    end)
   end
 
-  local cached = M.get(key)
-  if cached then
-    vim.schedule(function()
-      callback(nil, cached)
-    end)
-    return nil
+  if not opts.bypass then
+    local cached = M.get(key)
+    if cached then
+      vim.schedule(function()
+        callback(nil, cached)
+      end)
+      return nil
+    end
   end
 
   local task = pending[key]
   next_callback_id = next_callback_id + 1
   local callback_id = next_callback_id
-  if task then
+  if task and not opts.bypass then
     task.callbacks[callback_id] = callback
   else
+    local previous = task
     task = { callbacks = {} }
+    if previous and opts.bypass then
+      for id, waiting in pairs(previous.callbacks) do
+        task.callbacks[id] = waiting
+      end
+      if previous.cancel then
+        previous.cancel()
+      end
+    end
     task.callbacks[callback_id] = callback
     pending[key] = task
     task.cancel = producer(function(err, translated)
+      if pending[key] ~= task then
+        return
+      end
       local callbacks = task.callbacks
       pending[key] = nil
+      if not err and translated and opts.on_success then
+        opts.on_success(translated)
+      end
       for _, waiting in pairs(callbacks) do
         waiting(err, translated)
       end
@@ -291,6 +335,36 @@ function M.run(key, producer, callback)
   end
 end
 
+---@param key string
+---@return boolean
+function M.delete_key(key)
+  load_disk()
+  if not entries[key] then
+    return false
+  end
+  remove(key)
+  stats.deletes = stats.deletes + 1
+  schedule_write()
+  return true
+end
+
+---@param text string
+---@return integer deleted
+function M.delete_text(text)
+  load_disk()
+  local keys = text_index[hash(text)]
+  if not keys then
+    return 0
+  end
+  local list = vim.tbl_keys(keys)
+  for _, key in ipairs(list) do
+    remove(key)
+  end
+  stats.deletes = stats.deletes + #list
+  schedule_write()
+  return #list
+end
+
 ---@return nil
 function M.clear()
   entries = {}
@@ -308,6 +382,7 @@ function M.stats()
     hits = stats.hits,
     misses = stats.misses,
     writes = stats.writes,
+    deletes = stats.deletes,
   }
 end
 

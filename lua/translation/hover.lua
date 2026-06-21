@@ -80,10 +80,14 @@ local function source_context(bufnr)
   }
 end
 
+---@param opts? TranslationHoverRequestOptions
 ---@return nil
-function M.show()
+function M.show(opts)
+  opts = opts or {}
   local view = require("translation.view")
-  if view.focus() then
+  if opts.force and view.is_open() then
+    view.close()
+  elseif view.focus() then
     return
   end
 
@@ -135,7 +139,9 @@ function M.show()
         end
         view.finish(assert(translated))
       end,
-      source_context(bufnr)
+      vim.tbl_extend("force", source_context(bufnr), {
+        bypass_cache = opts.force == true,
+      })
     )
   end)
 end

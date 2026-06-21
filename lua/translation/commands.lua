@@ -3,9 +3,10 @@ local M = {}
 
 ---@return nil
 function M.register()
-  vim.api.nvim_create_user_command("TranslateHover", function()
-    require("translation").hover()
+  vim.api.nvim_create_user_command("TranslateHover", function(command)
+    require("translation").hover({ force = command.bang })
   end, {
+    bang = true,
     desc = "显示双语 LSP Hover",
   })
 
@@ -21,6 +22,18 @@ function M.register()
     vim.notify(vim.inspect(stats), vim.log.levels.INFO, { title = "translation.nvim cache" })
   end, {
     desc = "显示翻译缓存统计",
+  })
+
+  vim.api.nvim_create_user_command("TranslateCacheDelete", function(command)
+    local deleted = require("translation").delete_cache(command.args)
+    vim.notify(
+      ("已删除 %d 条匹配的翻译缓存"):format(deleted),
+      vim.log.levels.INFO,
+      { title = "translation.nvim" }
+    )
+  end, {
+    nargs = 1,
+    desc = "按原文删除单条或多个缓存变体",
   })
 
   vim.api.nvim_create_autocmd("VimLeavePre", {
