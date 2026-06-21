@@ -70,6 +70,16 @@ local function request_params(bufnr)
   return vim.lsp.util.make_position_params(0, encoding)
 end
 
+---@param bufnr integer
+---@return TranslationSourceContext
+local function source_context(bufnr)
+  local file_path = vim.api.nvim_buf_get_name(bufnr)
+  return {
+    file_path = file_path,
+    extension = file_path == "" and "" or vim.fn.fnamemodify(file_path, ":e"),
+  }
+end
+
 ---@return nil
 function M.show()
   local view = require("translation.view")
@@ -124,7 +134,8 @@ function M.show()
           return
         end
         view.finish(assert(translated))
-      end
+      end,
+      source_context(bufnr)
     )
   end)
 end

@@ -36,12 +36,35 @@ test("accepts dynamic system prompt function", function()
         return "Translate to " .. context.target_language
       end,
     },
+  }, {
+    file_path = "/workspace/src/example.ts",
+    extension = "ts",
   }))
 
   assert(received ~= nil)
   assert(received.text == "hover text")
   assert(received.target_language == "ja")
+  assert(received.file_path == "/workspace/src/example.ts")
+  assert(received.extension == "ts")
   assert(messages[1].content == "Translate to ja")
+end)
+
+test("uses empty file context when source is unavailable", function()
+  ---@type TranslationPromptContext?
+  local received = nil
+  assert(prompt.messages("hover text", {
+    target_language = "zh-CN",
+    llm = {
+      system_prompt = function(context)
+        received = context
+        return "translate"
+      end,
+    },
+  }))
+
+  assert(received ~= nil)
+  assert(received.file_path == "")
+  assert(received.extension == "")
 end)
 
 test("reports invalid dynamic system prompt", function()

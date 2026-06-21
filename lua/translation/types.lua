@@ -9,6 +9,12 @@
 ---@class TranslationPromptContext
 ---@field target_language string
 ---@field text string
+---@field file_path string
+---@field extension string
+
+---@class TranslationSourceContext
+---@field file_path? string
+---@field extension? string
 
 ---@class TranslationKeymapConfig
 ---@field hover string|false

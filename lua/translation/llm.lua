@@ -60,8 +60,9 @@ end
 ---@param text string
 ---@param opts TranslationConfig
 ---@param callback TranslationCallback
+---@param source_context? TranslationSourceContext
 ---@return TranslationCancel?
-function M.translate(text, opts, callback)
+function M.translate(text, opts, callback, source_context)
   local llm = opts.llm
   if type(llm.translate) == "function" then
     return custom_translate(llm.translate, text, opts, callback)
@@ -84,7 +85,7 @@ function M.translate(text, opts, callback)
     table.insert(headers, ("%s: %s"):format(name, value))
   end
 
-  local messages, prompt_err = require("translation.prompt").messages(text, opts)
+  local messages, prompt_err = require("translation.prompt").messages(text, opts, source_context)
   if not messages then
     callback(("System Prompt 配置错误：%s"):format(prompt_err))
     return nil

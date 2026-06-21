@@ -39,12 +39,16 @@ end
 
 ---@param text string
 ---@param opts TranslationConfig|TranslationPromptOptions
+---@param source_context? TranslationSourceContext
 ---@return TranslationChatMessage[]? messages
 ---@return string? error
-function M.messages(text, opts)
+function M.messages(text, opts, source_context)
+  source_context = source_context or {}
   local system_prompt, err = M.resolve_system_prompt(opts.llm.system_prompt, {
     target_language = opts.target_language,
     text = text,
+    file_path = source_context.file_path or "",
+    extension = source_context.extension or "",
   })
   if not system_prompt then
     return nil, err

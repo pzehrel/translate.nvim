@@ -65,6 +65,8 @@ llm = {
   system_prompt = function(context)
     -- context.target_language
     -- context.text
+    -- context.file_path：当前 buffer 的绝对路径，未命名时为空字符串
+    -- context.extension：不带点的文件扩展名，无扩展名时为空字符串
     return "Translate software documentation into " .. context.target_language
   end,
 }
