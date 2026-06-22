@@ -1,7 +1,7 @@
 ---@type fun(name: string, fn: fun())
 local test = assert(_G.test)
 
-local cache = require("translation.cache")
+local cache = require("translate.cache")
 
 local function config(overrides)
   return vim.tbl_deep_extend("force", {
@@ -80,13 +80,13 @@ test("reloads persisted translations in a fresh cache module", function()
   cache.set("reload-key", "source", "reloaded translation")
   cache.flush()
 
-  package.loaded["translation.cache"] = nil
-  local reloaded = require("translation.cache")
+  package.loaded["translate.cache"] = nil
+  local reloaded = require("translate.cache")
   reloaded.setup(persistent_config)
 
   assert(reloaded.get("reload-key") == "reloaded translation")
   reloaded.clear()
-  package.loaded["translation.cache"] = reloaded
+  package.loaded["translate.cache"] = reloaded
   cache = reloaded
 end)
 

@@ -1,7 +1,7 @@
----@class TranslationLlmModule
+---@class TranslateLlmModule
 local M = {}
 
----@param llm TranslationLlmConfig|TranslationLlmOptions
+---@param llm TranslateLlmConfig|TranslateLlmOptions
 ---@return string?
 function M.resolve_api_key(llm)
   local api_key = llm.api_key
@@ -24,11 +24,11 @@ function M.resolve_api_key(llm)
   return nil
 end
 
----@param fn TranslationCustomTranslate
+---@param fn TranslateCustomTranslate
 ---@param text string
----@param opts TranslationConfig
----@param callback TranslationCallback
----@return TranslationCancel?
+---@param opts TranslateConfig
+---@param callback TranslateCallback
+---@return TranslateCancel?
 local function custom_translate(fn, text, opts, callback)
   local ok, cancel_or_error = pcall(fn, text, opts, callback)
   if not ok then
@@ -47,7 +47,7 @@ local function parse_response(stdout)
     return nil, "LLM 返回了无效 JSON"
   end
 
-  ---@cast decoded TranslationOpenAiResponse
+  ---@cast decoded TranslateOpenAiResponse
   local choice = decoded.choices and decoded.choices[1]
   local content = choice and choice.message and choice.message.content
   if type(content) ~= "string" or content == "" then
@@ -58,17 +58,17 @@ local function parse_response(stdout)
 end
 
 ---@param text string
----@param opts TranslationConfig
----@param callback TranslationCallback
----@param source_context? TranslationSourceContext
----@return TranslationCancel?
+---@param opts TranslateConfig
+---@param callback TranslateCallback
+---@param source_context? TranslateSourceContext
+---@return TranslateCancel?
 function M.translate(text, opts, callback, source_context)
   local llm = opts.llm
-  local cache = require("translation.cache")
+  local cache = require("translate.cache")
   source_context = vim.tbl_extend("force", source_context or {}, {
     cache = cache.context(text),
   })
-  local messages, prompt_err = require("translation.prompt").messages(text, opts, source_context)
+  local messages, prompt_err = require("translate.prompt").messages(text, opts, source_context)
   if not messages then
     callback(("System Prompt 配置错误：%s"):format(prompt_err))
     return nil

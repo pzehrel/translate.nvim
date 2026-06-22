@@ -1,7 +1,7 @@
 ---@type fun(name: string, fn: fun())
 local test = assert(_G.test)
 
-local markdown = require("translation.markdown")
+local markdown = require("translate.markdown")
 
 test("normalizes markup content", function()
   assert(markdown.normalize({ kind = "markdown", value = "**hello**" }) == "**hello**")

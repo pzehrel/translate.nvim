@@ -1,13 +1,13 @@
----@class TranslationCacheModule
+---@class TranslateCacheModule
 local M = {}
 
----@type table<string, TranslationCacheEntry>
+---@type table<string, TranslateCacheEntry>
 local entries = {}
 ---@type table<string, table<string, boolean>>
 local text_index = {}
----@type table<string, { callbacks: table<integer, TranslationCallback>, cancel: TranslationCancel? }>
+---@type table<string, { callbacks: table<integer, TranslateCallback>, cancel: TranslateCancel? }>
 local pending = {}
----@type TranslationCacheConfig?
+---@type TranslateCacheConfig?
 local config = nil
 local loaded = false
 local next_callback_id = 0
@@ -32,7 +32,7 @@ local function hash(value)
   return vim.fn.sha256(value)
 end
 
----@param entry TranslationCacheEntry
+---@param entry TranslateCacheEntry
 ---@return boolean
 local function expired(entry)
   return entry.expires_at <= now()
@@ -55,7 +55,7 @@ local function remove(key)
   end
 end
 
----@param entry TranslationCacheEntry
+---@param entry TranslateCacheEntry
 ---@return nil
 local function index(entry)
   local keys = text_index[entry.text_hash] or {}
@@ -154,7 +154,7 @@ local function load_disk()
   if not ok or type(decoded) ~= "table" or decoded.version ~= 1 then
     return
   end
-  ---@cast decoded TranslationPersistentCache
+  ---@cast decoded TranslatePersistentCache
   for _, entry in ipairs(decoded.entries or {}) do
     if not expired(entry) then
       entries[entry.key] = entry
@@ -164,7 +164,7 @@ local function load_disk()
   prune()
 end
 
----@param opts TranslationCacheConfig
+---@param opts TranslateCacheConfig
 ---@return nil
 function M.setup(opts)
   config = opts
@@ -175,7 +175,7 @@ function M.setup(opts)
 end
 
 ---@param text string
----@return TranslationPromptCacheContext
+---@return TranslatePromptCacheContext
 function M.context(text)
   if not config or not config.enabled then
     return { hit = false }
@@ -205,8 +205,8 @@ function M.context(text)
 end
 
 ---@param text string
----@param messages TranslationChatMessage[]
----@param opts TranslationConfig
+---@param messages TranslateChatMessage[]
+---@param opts TranslateConfig
 ---@return string
 function M.key(text, messages, opts)
   return hash(vim.json.encode({
@@ -262,10 +262,10 @@ function M.set(key, text, translated)
 end
 
 ---@param key string
----@param producer fun(done: TranslationCallback): TranslationCancel?
----@param callback TranslationCallback
+---@param producer fun(done: TranslateCallback): TranslateCancel?
+---@param callback TranslateCallback
 ---@param opts? { bypass: boolean?, on_success: fun(translated: string)? }
----@return TranslationCancel?
+---@return TranslateCancel?
 function M.run(key, producer, callback, opts)
   opts = opts or {}
   if not config or not config.enabled then
@@ -374,7 +374,7 @@ function M.clear()
   end
 end
 
----@return TranslationCacheStats
+---@return TranslateCacheStats
 function M.stats()
   return {
     entries = vim.tbl_count(entries),

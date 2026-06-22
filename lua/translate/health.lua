@@ -1,9 +1,9 @@
----@class TranslationHealthModule
+---@class TranslateHealthModule
 local M = {}
 
 ---@return nil
 function M.check()
-  vim.health.start("translation.nvim")
+  vim.health.start("translate.nvim")
 
   if vim.fn.has("nvim-0.10") == 1 then
     vim.health.ok("Neovim 版本满足 0.10+")
@@ -17,7 +17,7 @@ function M.check()
     vim.health.warn("未找到 curl；请配置自定义 llm.translate")
   end
 
-  local config = require("translation.config").get()
+  local config = require("translate.config").get()
   if type(config.llm.translate) == "function" then
     vim.health.ok("已配置自定义 LLM Client")
   elseif config.llm.endpoint ~= "" and config.llm.model ~= "" then

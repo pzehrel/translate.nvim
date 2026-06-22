@@ -1,7 +1,7 @@
----@class TranslationViewModule
+---@class TranslateViewModule
 local M = {}
 
----@type TranslationViewState
+---@type TranslateViewState
 local state = {
   bufnr = nil,
   winid = nil,
@@ -41,7 +41,7 @@ function M.focus()
 end
 
 ---@param original string
----@param config TranslationConfig
+---@param config TranslateConfig
 ---@return nil
 function M.open(original, config)
   state.original = original

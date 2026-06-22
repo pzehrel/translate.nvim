@@ -1,8 +1,8 @@
----@class TranslationMarkdownModule
+---@class TranslateMarkdownModule
 local M = {}
 
 ---@param target string[]
----@param value TranslationHoverContents|nil
+---@param value TranslateHoverContents|nil
 ---@return nil
 local function append(target, value)
   if type(value) == "string" then
@@ -36,7 +36,7 @@ local function append(target, value)
   end
 end
 
----@param contents TranslationHoverContents
+---@param contents TranslateHoverContents
 ---@return string
 function M.normalize(contents)
   ---@type string[]
@@ -45,7 +45,7 @@ function M.normalize(contents)
   return table.concat(parts, "\n\n")
 end
 
----@param responses table<integer|string, TranslationLspResponse|TranslationHoverResult>
+---@param responses table<integer|string, TranslateLspResponse|TranslateHoverResult>
 ---@return string
 function M.collect(responses)
   ---@type table<string, boolean>

@@ -1,9 +1,9 @@
----@class TranslationHoverModule
+---@class TranslateHoverModule
 local M = {}
 
-local augroup = vim.api.nvim_create_augroup("translation.nvim", { clear = true })
+local augroup = vim.api.nvim_create_augroup("translate.nvim", { clear = true })
 local generation = 0
----@type TranslationCancel?
+---@type TranslateCancel?
 local cancel_translation = nil
 
 ---@param bufnr integer
@@ -31,7 +31,7 @@ local function supports_hover(client)
   return client ~= nil and client:supports_method("textDocument/hover")
 end
 
----@param config TranslationConfig
+---@param config TranslateConfig
 ---@return nil
 function M.setup_keymap(config)
   vim.api.nvim_clear_autocmds({ group = augroup })
@@ -71,7 +71,7 @@ local function request_params(bufnr)
 end
 
 ---@param bufnr integer
----@return TranslationSourceContext
+---@return TranslateSourceContext
 local function source_context(bufnr)
   local file_path = vim.api.nvim_buf_get_name(bufnr)
   return {
@@ -80,11 +80,11 @@ local function source_context(bufnr)
   }
 end
 
----@param opts? TranslationHoverRequestOptions
+---@param opts? TranslateHoverRequestOptions
 ---@return nil
 function M.show(opts)
   opts = opts or {}
-  local view = require("translation.view")
+  local view = require("translate.view")
   if opts.force and view.is_open() then
     view.close()
   elseif view.focus() then
@@ -94,7 +94,7 @@ function M.show(opts)
   local bufnr = vim.api.nvim_get_current_buf()
   local cursor = vim.api.nvim_win_get_cursor(0)
   local changedtick = vim.api.nvim_buf_get_changedtick(bufnr)
-  local config = require("translation.config").get()
+  local config = require("translate.config").get()
 
   generation = generation + 1
   local request_generation = generation
@@ -114,18 +114,18 @@ function M.show(opts)
       return
     end
 
-    local original = require("translation.markdown").collect(responses)
+    local original = require("translate.markdown").collect(responses)
     if original == "" then
       vim.notify(
         "当前位置没有 LSP Hover 内容",
         vim.log.levels.INFO,
-        { title = "translation.nvim" }
+        { title = "translate.nvim" }
       )
       return
     end
 
     view.open(original, config)
-    cancel_translation = require("translation.llm").translate(
+    cancel_translation = require("translate.llm").translate(
       original,
       config,
       function(err, translated)

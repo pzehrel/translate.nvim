@@ -1,7 +1,7 @@
----@class TranslationConfigModule
+---@class TranslateConfigModule
 local M = {}
 
----@type TranslationConfig
+---@type TranslateConfig
 local defaults = {
   target_language = "zh-CN",
   keymaps = {
@@ -29,28 +29,28 @@ local defaults = {
     max_entries = 500,
     ttl = 30 * 60 * 1000,
     persistence = false,
-    path = vim.fs.joinpath(vim.uv.os_tmpdir(), "translation.nvim", "cache.json"),
+    path = vim.fs.joinpath(vim.uv.os_tmpdir(), "translate.nvim", "cache.json"),
     debounce = 1500,
   },
 }
 
----@type TranslationConfig
+---@type TranslateConfig
 local options = vim.deepcopy(defaults)
 
----@param opts? TranslationOptions
----@return TranslationConfig
+---@param opts? TranslateOptions
+---@return TranslateConfig
 function M.setup(opts)
-  ---@type TranslationConfig
+  ---@type TranslateConfig
   options = vim.tbl_deep_extend("force", vim.deepcopy(defaults), opts or {})
   return options
 end
 
----@return TranslationConfig
+---@return TranslateConfig
 function M.get()
   return options
 end
 
----@return TranslationConfig
+---@return TranslateConfig
 function M.defaults()
   return vim.deepcopy(defaults)
 end

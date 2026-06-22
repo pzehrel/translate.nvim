@@ -1,7 +1,7 @@
----@class TranslationPromptModule
+---@class TranslatePromptModule
 local M = {}
 
----@param context TranslationPromptContext
+---@param context TranslatePromptContext
 ---@return string
 function M.default_system_prompt(context)
   return table.concat({
@@ -14,8 +14,8 @@ function M.default_system_prompt(context)
   }, " ")
 end
 
----@param system_prompt TranslationSystemPrompt?
----@param context TranslationPromptContext
+---@param system_prompt TranslateSystemPrompt?
+---@param context TranslatePromptContext
 ---@return string? prompt
 ---@return string? error
 function M.resolve_system_prompt(system_prompt, context)
@@ -38,9 +38,9 @@ function M.resolve_system_prompt(system_prompt, context)
 end
 
 ---@param text string
----@param opts TranslationConfig|TranslationPromptOptions
----@param source_context? TranslationSourceContext
----@return TranslationChatMessage[]? messages
+---@param opts TranslateConfig|TranslatePromptOptions
+---@param source_context? TranslateSourceContext
+---@return TranslateChatMessage[]? messages
 ---@return string? error
 function M.messages(text, opts, source_context)
   source_context = source_context or {}

@@ -1,4 +1,4 @@
-# translation.nvim
+# translate.nvim
 
 使用通用 LLM API 增强 Neovim 的 LSP Hover。
 
@@ -13,7 +13,7 @@
 ## 配置
 
 ```lua
-require("translation").setup({
+require("translate").setup({
   target_language = "zh-CN",
   keymaps = {
     hover = "gK",
@@ -28,7 +28,7 @@ require("translation").setup({
     max_entries = 500,
     ttl = 30 * 60 * 1000,
     persistence = false,
-    path = vim.fs.joinpath(vim.uv.os_tmpdir(), "translation.nvim", "cache.json"),
+    path = vim.fs.joinpath(vim.uv.os_tmpdir(), "translate.nvim", "cache.json"),
   },
 })
 ```
@@ -104,7 +104,7 @@ cache = {
 ## 自行覆盖 `K`
 
 ```lua
-require("translation").setup({
+require("translate").setup({
   keymaps = {
     hover = false,
   },
@@ -112,7 +112,7 @@ require("translation").setup({
 
 vim.api.nvim_create_autocmd("LspAttach", {
   callback = function(event)
-    vim.keymap.set("n", "K", require("translation").hover, {
+    vim.keymap.set("n", "K", require("translate").hover, {
       buffer = event.buf,
       desc = "双语 LSP Hover",
     })
@@ -123,7 +123,7 @@ vim.api.nvim_create_autocmd("LspAttach", {
 ## 自定义 LLM Client
 
 ```lua
-require("translation").setup({
+require("translate").setup({
   llm = {
     translate = function(text, opts, callback)
       -- 完成后调用 callback(nil, translated_text)
@@ -141,14 +141,14 @@ require("translation").setup({
 - `:TranslateCacheClear`：清除翻译结果缓存。
 - `:TranslateCacheDelete {原文}`：删除该原文在不同模型、Prompt 和目标语言下的缓存变体。
 - `:TranslateCacheStats`：显示缓存条目、命中、未命中和进行中请求数量。
-- `:checkhealth translation`：检查运行环境和配置。
+- `:checkhealth translate`：检查运行环境和配置。
 
 Lua API 也支持精确删除：
 
 ```lua
-require("translation").delete_cache(text)      -- 按原文删除所有变体
-require("translation").delete_cache_key(key)   -- 按精确缓存键删除
-require("translation").hover({ force = true }) -- 跳过读取并重新翻译
+require("translate").delete_cache(text)      -- 按原文删除所有变体
+require("translate").delete_cache_key(key)   -- 按精确缓存键删除
+require("translate").hover({ force = true }) -- 跳过读取并重新翻译
 ```
 
 ## 开发
