@@ -44,14 +44,14 @@ end
 local function parse_response(stdout)
   local ok, decoded = pcall(vim.json.decode, stdout)
   if not ok then
-    return nil, "LLM 返回了无效 JSON"
+    return nil, "LLM returned invalid JSON"
   end
 
   ---@cast decoded TranslateOpenAiResponse
   local choice = decoded.choices and decoded.choices[1]
   local content = choice and choice.message and choice.message.content
   if type(content) ~= "string" or content == "" then
-    return nil, "LLM 返回内容为空"
+    return nil, "LLM returned empty content"
   end
 
   return content
@@ -70,7 +70,7 @@ function M.translate(text, opts, callback, source_context)
   })
   local messages, prompt_err = require("translate.prompt").messages(text, opts, source_context)
   if not messages then
-    callback(("System Prompt 配置错误：%s"):format(prompt_err))
+    callback(("System Prompt configuration error: %s"):format(prompt_err))
     return nil
   end
   local cache_key = cache.key(text, messages, opts)
@@ -83,7 +83,7 @@ function M.translate(text, opts, callback, source_context)
       end
 
       if llm.endpoint == "" or llm.model == "" then
-        done("尚未配置 LLM endpoint 和 model")
+        done("LLM endpoint and model not yet configured")
         return nil
       end
 
@@ -122,7 +122,7 @@ function M.translate(text, opts, callback, source_context)
       local process = vim.system(command, { text = true }, function(result)
         vim.schedule(function()
           if result.code ~= 0 then
-            done(("LLM 请求失败：%s"):format(vim.trim(result.stderr or "")))
+            done(("LLM request failed: %s"):format(vim.trim(result.stderr or "")))
             return
           end
 

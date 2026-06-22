@@ -45,7 +45,7 @@ end
 ---@return nil
 function M.open(original, config)
   state.original = original
-  local body = original .. "\n\n---\n\n_正在翻译…_"
+  local body = original .. "\n\n---\n\n_Translating…_"
   local bufnr, winid = vim.lsp.util.open_floating_preview(lines(body), "markdown", {
     border = config.hover.border,
     max_width = config.hover.max_width,

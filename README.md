@@ -1,16 +1,16 @@
 # translate.nvim
 
-使用通用 LLM API 增强 Neovim 的 LSP Hover。
+Enhance Neovim's LSP Hover with generic LLM APIs.
 
-当前开发重点是 `gK` 双语 Hover：原始类型提示会立即显示，LLM 译文完成后追加到同一个浮窗。插件不集成 GitHub Copilot，也不接入 Google、Bing、DeepL 等独立翻译服务。
+The current development focus is the `gK` bilingual Hover: original type hints display immediately, and the LLM translation is appended to the same floating window once ready. The plugin does not integrate GitHub Copilot, nor does it connect to Google, Bing, DeepL, or other standalone translation services.
 
-## 要求
+## Requirements
 
 - Neovim 0.10+
-- `curl`，或自定义 `llm.translate`
-- 支持 `textDocument/hover` 的 LSP Client
+- `curl`, or a custom `llm.translate`
+- An LSP client that supports `textDocument/hover`
 
-## 配置
+## Configuration
 
 ```lua
 require("translate").setup({
@@ -33,7 +33,7 @@ require("translate").setup({
 })
 ```
 
-插件默认从 `LLM_API_KEY` 环境变量读取密钥。也可以修改环境变量名：
+The plugin reads the API key from the `LLM_API_KEY` environment variable by default. You can change the environment variable name:
 
 ```lua
 llm = {
@@ -41,7 +41,7 @@ llm = {
 }
 ```
 
-`api_key` 仍支持字符串或回调，并且优先于 `api_key_env`：
+`api_key` still supports strings or callbacks, and takes precedence over `api_key_env`:
 
 ```lua
 llm = {
@@ -51,9 +51,9 @@ llm = {
 }
 ```
 
-## 自定义 System Prompt
+## Custom System Prompt
 
-`llm.system_prompt` 支持字符串：
+`llm.system_prompt` supports strings:
 
 ```lua
 llm = {
@@ -65,29 +65,29 @@ Return only the translated Markdown.
 }
 ```
 
-也支持函数，可根据目标语言和原文动态生成：
+It also supports functions that generate the prompt dynamically based on the target language and source text:
 
 ```lua
 llm = {
   system_prompt = function(context)
     -- context.target_language
     -- context.text
-    -- context.file_path：当前 buffer 的绝对路径，未命名时为空字符串
-    -- context.extension：不带点的文件扩展名，无扩展名时为空字符串
-    -- context.cache.hit：当前原文是否存在未过期的历史译文
-    -- context.cache.translation：历史译文；未命中时为 nil
+    -- context.file_path: absolute path of the current buffer, empty when unnamed
+    -- context.extension: file extension without the leading dot, empty when none
+    -- context.cache.hit: whether an unexpired historical translation exists for the current text
+    -- context.cache.translation: the historical translation; nil on cache miss
     return "Translate software documentation into " .. context.target_language
   end,
 }
 ```
 
-未配置时使用插件内置的软件文档翻译 Prompt。
+When not configured, the plugin uses its built-in software documentation translation prompt.
 
-`context.cache` 是当前原文的历史缓存提示。真正的缓存命中仍以最终 System Prompt、User 内容、模型、Endpoint 和目标语言共同计算，避免 Prompt 或模型变化后误用旧结果。
+`context.cache` is a historical cache hint for the current text. True cache hits are still determined by the final System Prompt, User content, model, endpoint, and target language, so old results are not reused after the prompt or model changes.
 
-## 翻译结果缓存
+## Translation Result Cache
 
-默认启用当前 Neovim 会话内的 LRU/TTL 缓存，并合并相同的进行中请求。持久化默认关闭，可显式开启：
+An LRU/TTL cache is enabled by default within the current Neovim session, and identical in-flight requests are deduplicated. Persistence is disabled by default and can be enabled explicitly:
 
 ```lua
 cache = {
@@ -97,11 +97,11 @@ cache = {
 }
 ```
 
-磁盘缓存只保存哈希键、原文哈希、译文和时间戳，不保存原文、文件路径、Prompt 或 API Key。写入采用防抖和临时文件原子替换；缓存文件损坏时会被忽略。
+The disk cache stores only the hash key, source text hash, translation, and timestamp. It does not store the source text, file path, prompt, or API key. Writes are debounced and use atomic temporary file replacement; corrupted cache files are ignored.
 
-默认目录位于操作系统临时目录下。它通常可以跨 Neovim 重启复用，但操作系统可随时清理，因此不应视为永久数据。用户仍可通过 `cache.path` 指定其他位置。
+The default directory is under the OS temporary directory. It can usually be reused across Neovim restarts, but the OS may clean it up at any time, so it should not be treated as permanent data. You can still specify another location via `cache.path`.
 
-## 自行覆盖 `K`
+## Overriding `K` Manually
 
 ```lua
 require("translate").setup({
@@ -114,52 +114,52 @@ vim.api.nvim_create_autocmd("LspAttach", {
   callback = function(event)
     vim.keymap.set("n", "K", require("translate").hover, {
       buffer = event.buf,
-      desc = "双语 LSP Hover",
+      desc = "Bilingual LSP Hover",
     })
   end,
 })
 ```
 
-## 自定义 LLM Client
+## Custom LLM Client
 
 ```lua
 require("translate").setup({
   llm = {
     translate = function(text, opts, callback)
-      -- 完成后调用 callback(nil, translated_text)
-      -- 失败时调用 callback(error_message)
-      -- 可以返回一个取消函数
+      -- call callback(nil, translated_text) on success
+      -- call callback(error_message) on failure
+      -- may return a cancel function
     end,
   },
 })
 ```
 
-## 命令
+## Commands
 
-- `:TranslateHover`：显示双语 LSP Hover。
-- `:TranslateHover!`：跳过缓存重新翻译，成功后更新该请求的缓存。
-- `:TranslateCacheClear`：清除翻译结果缓存。
-- `:TranslateCacheDelete {原文}`：删除该原文在不同模型、Prompt 和目标语言下的缓存变体。
-- `:TranslateCacheStats`：显示缓存条目、命中、未命中和进行中请求数量。
-- `:checkhealth translate`：检查运行环境和配置。
+- `:TranslateHover`: Show bilingual LSP Hover.
+- `:TranslateHover!`: Skip the cache and re-translate; update the cache for this request on success.
+- `:TranslateCacheClear`: Clear the translation result cache.
+- `:TranslateCacheDelete {source_text}`: Delete cache variants for the source text across different models, prompts, and target languages.
+- `:TranslateCacheStats`: Show cache entries, hits, misses, and in-flight request counts.
+- `:checkhealth translate`: Check the runtime environment and configuration.
 
-Lua API 也支持精确删除：
+The Lua API also supports precise deletion:
 
 ```lua
-require("translate").delete_cache(text)      -- 按原文删除所有变体
-require("translate").delete_cache_key(key)   -- 按精确缓存键删除
-require("translate").hover({ force = true }) -- 跳过读取并重新翻译
+require("translate").delete_cache(text)      -- delete all variants by source text
+require("translate").delete_cache_key(key)   -- delete by exact cache key
+require("translate").hover({ force = true }) -- skip cache and re-translate
 ```
 
-## 开发
+## Development
 
-开发环境还需要：
+The development environment also requires:
 
 - StyLua
 - Luacheck
 - Lua Language Server 3.18.2+
 
-项目通过 LuaCATS 注解描述全部公开配置、回调和内部数据结构。`.luarc.json` 用于编辑器诊断，`make typecheck` 会自动加入当前 Neovim runtime 的类型定义并执行完整工作区检查。
+The project uses LuaCATS annotations to describe all public configuration, callbacks, and internal data structures. `.luarc.json` is used for editor diagnostics, and `make typecheck` automatically includes the current Neovim runtime type definitions and performs a full workspace check.
 
 ```sh
 make format

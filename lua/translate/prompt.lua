@@ -25,7 +25,7 @@ function M.resolve_system_prompt(system_prompt, context)
       return nil, tostring(value)
     end
     if type(value) ~= "string" or value == "" then
-      return nil, "llm.system_prompt 回调必须返回非空字符串"
+      return nil, "llm.system_prompt callback must return a non-empty string"
     end
     return value
   end

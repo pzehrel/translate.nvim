@@ -41,7 +41,7 @@ test("llm client reports missing endpoint and model", function()
     message = err
   end)
 
-  assert(message == "尚未配置 LLM endpoint 和 model")
+  assert(message == "LLM endpoint and model not yet configured")
 end)
 
 test("api key is read from configured environment variable", function()

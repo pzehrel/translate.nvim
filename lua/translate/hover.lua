@@ -56,7 +56,7 @@ function M.setup_keymap(config)
 
       vim.keymap.set("n", lhs, M.show, {
         buffer = event.buf,
-        desc = "双语 LSP Hover",
+        desc = "Bilingual LSP Hover",
       })
     end,
   })
@@ -117,7 +117,7 @@ function M.show(opts)
     local original = require("translate.markdown").collect(responses)
     if original == "" then
       vim.notify(
-        "当前位置没有 LSP Hover 内容",
+        "No LSP Hover content at current position",
         vim.log.levels.INFO,
         { title = "translate.nvim" }
       )

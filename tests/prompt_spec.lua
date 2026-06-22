@@ -104,5 +104,5 @@ test("reports invalid dynamic system prompt", function()
   })
 
   assert(messages == nil)
-  assert(err == "llm.system_prompt 回调必须返回非空字符串")
+  assert(err == "llm.system_prompt callback must return a non-empty string")
 end)

@@ -7,33 +7,33 @@ function M.register()
     require("translate").hover({ force = command.bang })
   end, {
     bang = true,
-    desc = "显示双语 LSP Hover",
+    desc = "Show bilingual LSP Hover",
   })
 
   vim.api.nvim_create_user_command("TranslateCacheClear", function()
     require("translate").clear_cache()
-    vim.notify("翻译缓存已清除", vim.log.levels.INFO, { title = "translate.nvim" })
+    vim.notify("Translation cache cleared", vim.log.levels.INFO, { title = "translate.nvim" })
   end, {
-    desc = "清除翻译结果缓存",
+    desc = "Clear translation result cache",
   })
 
   vim.api.nvim_create_user_command("TranslateCacheStats", function()
     local stats = require("translate").cache_stats()
     vim.notify(vim.inspect(stats), vim.log.levels.INFO, { title = "translate.nvim cache" })
   end, {
-    desc = "显示翻译缓存统计",
+    desc = "Show translation cache statistics",
   })
 
   vim.api.nvim_create_user_command("TranslateCacheDelete", function(command)
     local deleted = require("translate").delete_cache(command.args)
     vim.notify(
-      ("已删除 %d 条匹配的翻译缓存"):format(deleted),
+      ("Deleted %d matching translation cache entries"):format(deleted),
       vim.log.levels.INFO,
       { title = "translate.nvim" }
     )
   end, {
     nargs = 1,
-    desc = "按原文删除单条或多个缓存变体",
+    desc = "Delete one or more cache variants by source text",
   })
 
   vim.api.nvim_create_autocmd("VimLeavePre", {

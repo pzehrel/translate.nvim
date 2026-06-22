@@ -6,38 +6,38 @@ function M.check()
   vim.health.start("translate.nvim")
 
   if vim.fn.has("nvim-0.10") == 1 then
-    vim.health.ok("Neovim 版本满足 0.10+")
+    vim.health.ok("Neovim version meets 0.10+")
   else
-    vim.health.error("需要 Neovim 0.10 或更高版本")
+    vim.health.error("Requires Neovim 0.10 or higher")
   end
 
   if vim.fn.executable("curl") == 1 then
-    vim.health.ok("已找到 curl")
+    vim.health.ok("curl found")
   else
-    vim.health.warn("未找到 curl；请配置自定义 llm.translate")
+    vim.health.warn("curl not found; please configure custom llm.translate")
   end
 
   local config = require("translate.config").get()
   if type(config.llm.translate) == "function" then
-    vim.health.ok("已配置自定义 LLM Client")
+    vim.health.ok("Custom LLM client configured")
   elseif config.llm.endpoint ~= "" and config.llm.model ~= "" then
-    vim.health.ok("已配置 OpenAI 风格 LLM endpoint 与 model")
+    vim.health.ok("OpenAI-style LLM endpoint and model configured")
   else
-    vim.health.warn("尚未配置 LLM endpoint 与 model")
+    vim.health.warn("LLM endpoint and model not yet configured")
   end
 
   if config.keymaps.hover == false then
-    vim.health.info("默认 Hover 映射已禁用")
+    vim.health.info("Default Hover mapping disabled")
   else
-    vim.health.info("默认双语 Hover 映射：" .. config.keymaps.hover)
+    vim.health.info("Default bilingual Hover mapping: " .. config.keymaps.hover)
   end
 
   if not config.cache.enabled then
-    vim.health.info("翻译结果缓存已禁用")
+    vim.health.info("Translation result cache disabled")
   elseif config.cache.persistence then
-    vim.health.ok("翻译结果持久化缓存已启用：" .. config.cache.path)
+    vim.health.ok("Translation result persistent cache enabled: " .. config.cache.path)
   else
-    vim.health.info("已启用会话级翻译结果缓存，磁盘持久化关闭")
+    vim.health.info("Session-level translation result cache enabled, disk persistence disabled")
   end
 end
 
