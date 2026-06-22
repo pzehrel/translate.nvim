@@ -2,114 +2,86 @@
 
 English | [中文](README.zh.md)
 
-Enhance Neovim's LSP Hover with generic LLM APIs.
+Bilingual LSP Hover for Neovim. Press `gK` to see the original type hint and an LLM translation side by side in the same floating window.
 
-The current development focus is the `gK` bilingual Hover: original type hints display immediately, and the LLM translation is appended to the same floating window once ready. The plugin does not integrate GitHub Copilot, nor does it connect to Google, Bing, DeepL, or other standalone translation services.
+- Original hover content appears instantly
+- LLM translation streams in below once ready
+- Works with any OpenAI-style LLM endpoint or a custom client
+- Caches results so repeated hovers feel instant
 
 ## Requirements
 
 - Neovim 0.10+
-- `curl`, or a custom `llm.translate`
 - An LSP client that supports `textDocument/hover`
+- `curl` (or supply your own `llm.translate` function)
+- An LLM API key
 
-## Configuration
+## Installation
+
+### lazy.nvim
+
+```lua
+{
+  "pzehrel/translate.nvim",
+  config = function()
+    require("translate").setup({
+      target_language = "zh-CN",
+      llm = {
+        endpoint = "https://api.openai.com/v1/chat/completions",
+        model = "gpt-4o-mini",
+        api_key_env = "OPENAI_API_KEY",
+      },
+    })
+  end,
+}
+```
+
+### vim-plug
+
+```vim
+Plug 'pzehrel/translate.nvim'
+```
 
 ```lua
 require("translate").setup({
   target_language = "zh-CN",
-  keymaps = {
-    hover = "gK",
-  },
   llm = {
-    endpoint = "https://example.com/v1/chat/completions",
-    model = "your-model",
-    api_key_env = "LLM_API_KEY",
-  },
-  cache = {
-    enabled = true,
-    max_entries = 500,
-    ttl = 30 * 60 * 1000,
-    persistence = false,
-    path = vim.fs.joinpath(vim.uv.os_tmpdir(), "translate.nvim", "cache.json"),
+    endpoint = "https://api.openai.com/v1/chat/completions",
+    model = "gpt-4o-mini",
+    api_key_env = "OPENAI_API_KEY",
   },
 })
 ```
 
-The plugin reads the API key from the `LLM_API_KEY` environment variable by default. You can change the environment variable name:
+## Quick Start
 
-```lua
-llm = {
-  api_key_env = "OPENAI_API_KEY",
-}
-```
+1. Set `OPENAI_API_KEY` in your environment.
+2. Install the plugin with the config above.
+3. Place your cursor on a symbol and press `gK`.
+4. The original LSP hover appears first; the translation is appended after the LLM responds.
 
-`api_key` still supports strings or callbacks, and takes precedence over `api_key_env`:
+## Usage
 
-```lua
-llm = {
-  api_key = function()
-    return os.getenv("PROJECT_LLM_API_KEY")
-  end,
-}
-```
+### Default keymap
 
-## Custom System Prompt
+- `gK` — show bilingual LSP hover for the symbol under the cursor.
 
-`llm.system_prompt` supports strings:
+### Commands
 
-```lua
-llm = {
-  system_prompt = [[
-Translate the natural-language parts of the LSP Hover into Simplified Chinese.
-Preserve all Markdown, code, type signatures, identifiers, and links.
-Return only the translated Markdown.
-  ]],
-}
-```
+| Command | Description |
+|---|---|
+| `:TranslateHover` | Show bilingual LSP hover. |
+| `:TranslateHover!` | Skip cache and re-translate; update cache on success. |
+| `:TranslateCacheClear` | Clear all translation results from the cache. |
+| `:TranslateCacheDelete {source_text}` | Delete every variant of a source text from the cache. |
+| `:TranslateCacheStats` | Show cache stats: entries, hits, misses, pending requests. |
+| `:checkhealth translate` | Verify requirements and configuration. |
 
-It also supports functions that generate the prompt dynamically based on the target language and source text:
-
-```lua
-llm = {
-  system_prompt = function(context)
-    -- context.target_language
-    -- context.text
-    -- context.file_path: absolute path of the current buffer, empty when unnamed
-    -- context.extension: file extension without the leading dot, empty when none
-    -- context.cache.hit: whether an unexpired historical translation exists for the current text
-    -- context.cache.translation: the historical translation; nil on cache miss
-    return "Translate software documentation into " .. context.target_language
-  end,
-}
-```
-
-When not configured, the plugin uses its built-in software documentation translation prompt.
-
-`context.cache` is a historical cache hint for the current text. True cache hits are still determined by the final System Prompt, User content, model, endpoint, and target language, so old results are not reused after the prompt or model changes.
-
-## Translation Result Cache
-
-An LRU/TTL cache is enabled by default within the current Neovim session, and identical in-flight requests are deduplicated. Persistence is disabled by default and can be enabled explicitly:
-
-```lua
-cache = {
-  persistence = true,
-  ttl = 7 * 24 * 60 * 60 * 1000,
-  max_entries = 1000,
-}
-```
-
-The disk cache stores only the hash key, source text hash, translation, and timestamp. It does not store the source text, file path, prompt, or API key. Writes are debounced and use atomic temporary file replacement; corrupted cache files are ignored.
-
-The default directory is under the OS temporary directory. It can usually be reused across Neovim restarts, but the OS may clean it up at any time, so it should not be treated as permanent data. You can still specify another location via `cache.path`.
-
-## Overriding `K` Manually
+### Override `K` instead of `gK`
 
 ```lua
 require("translate").setup({
-  keymaps = {
-    hover = false,
-  },
+  keymaps = { hover = false },
 })
 
 vim.api.nvim_create_autocmd("LspAttach", {
@@ -122,51 +94,152 @@ vim.api.nvim_create_autocmd("LspAttach", {
 })
 ```
 
-## Custom LLM Client
+## Features
+
+- **Non-blocking bilingual hover**: the original LSP response shows immediately; the LLM translation is appended when it arrives.
+- **Session and persistent cache**: LRU/TTL cache in memory by default, optional disk persistence across restarts.
+- **Custom system prompt**: replace the built-in prompt with your own string or a function that receives file context and cache state.
+- **Custom LLM client**: bypass `curl` entirely and provide your own `translate` function.
+- **Privacy-conscious cache**: the cache stores hashes and translations only, never the raw source text, file paths, prompts, or API keys.
+
+## Configuration
+
+Full options with defaults:
 
 ```lua
 require("translate").setup({
+  target_language = "zh-CN",
+  keymaps = {
+    hover = "gK",
+  },
+  hover = {
+    border = "rounded",
+    max_width = 80,
+    max_height = 30,
+    show_original = true,
+  },
   llm = {
-    translate = function(text, opts, callback)
-      -- call callback(nil, translated_text) on success
-      -- call callback(error_message) on failure
-      -- may return a cancel function
-    end,
+    endpoint = "",
+    model = "",
+    api_key = nil,                 -- string or function returning a string
+    api_key_env = "LLM_API_KEY",   -- ignored when api_key is set
+    timeout = 30000,
+    curl = "curl",
+    headers = {},
+    system_prompt = nil,           -- string or function(context) -> string
+    translate = nil,               -- function(text, opts, callback) -> cancel?
+  },
+  cache = {
+    enabled = true,
+    max_entries = 500,
+    ttl = 30 * 60 * 1000,
+    persistence = false,
+    path = vim.fs.joinpath(vim.uv.os_tmpdir(), "translate.nvim", "cache.json"),
+    debounce = 1000,
   },
 })
 ```
 
-## Commands
+### API key
 
-- `:TranslateHover`: Show bilingual LSP Hover.
-- `:TranslateHover!`: Skip the cache and re-translate; update the cache for this request on success.
-- `:TranslateCacheClear`: Clear the translation result cache.
-- `:TranslateCacheDelete {source_text}`: Delete cache variants for the source text across different models, prompts, and target languages.
-- `:TranslateCacheStats`: Show cache entries, hits, misses, and in-flight request counts.
-- `:checkhealth translate`: Check the runtime environment and configuration.
-
-The Lua API also supports precise deletion:
+The plugin reads the key from `LLM_API_KEY` by default. Use a different variable:
 
 ```lua
-require("translate").delete_cache(text)      -- delete all variants by source text
-require("translate").delete_cache_key(key)   -- delete by exact cache key
-require("translate").hover({ force = true }) -- skip cache and re-translate
+llm = { api_key_env = "OPENAI_API_KEY" }
+```
+
+Or provide it directly (takes precedence over `api_key_env`):
+
+```lua
+llm = {
+  api_key = function()
+    return os.getenv("PROJECT_LLM_API_KEY")
+  end,
+}
+```
+
+### Custom system prompt
+
+String:
+
+```lua
+llm = {
+  system_prompt = [[
+Translate the natural-language parts of the LSP Hover into Simplified Chinese.
+Preserve all Markdown, code, type signatures, identifiers, and links.
+Return only the translated Markdown.
+  ]],
+}
+```
+
+Function with context:
+
+```lua
+llm = {
+  system_prompt = function(context)
+    -- context.target_language
+    -- context.text
+    -- context.file_path        -- current buffer path, empty when unnamed
+    -- context.extension        -- file extension without dot, empty when none
+    -- context.cache.hit        -- whether a cached translation exists
+    -- context.cache.translation -- the cached translation, or nil
+    return "Translate software documentation into " .. context.target_language
+  end,
+}
+```
+
+When omitted, a built-in software-documentation prompt is used.
+
+### Cache
+
+Enable persistent disk cache:
+
+```lua
+cache = {
+  persistence = true,
+  ttl = 7 * 24 * 60 * 60 * 1000,
+  max_entries = 1000,
+}
+```
+
+The cache file stores hash keys, source hashes, translations, and timestamps. It never stores raw source text, file paths, prompts, or API keys. The default path lives in the OS temporary directory and may be cleaned up by the OS; set `cache.path` to keep it elsewhere.
+
+### Custom LLM client
+
+```lua
+llm = {
+  translate = function(text, opts, callback)
+    -- callback(nil, translated_text) on success
+    -- callback(error_message) on failure
+    -- optionally return a cancel function
+  end,
+}
+```
+
+## Lua API
+
+```lua
+require("translate").hover({ force = true })   -- skip cache and re-translate
+require("translate").clear_cache()             -- clear all cache entries
+require("translate").delete_cache(text)        -- delete all variants of source text
+require("translate").delete_cache_key(key)     -- delete a single exact cache key
+require("translate").cache_stats()             -- return cache statistics
 ```
 
 ## Development
 
-The development environment also requires:
+Development dependencies:
 
 - StyLua
 - Luacheck
 - Lua Language Server 3.18.2+
 
-The project uses LuaCATS annotations to describe all public configuration, callbacks, and internal data structures. `.luarc.json` is used for editor diagnostics, and `make typecheck` automatically includes the current Neovim runtime type definitions and performs a full workspace check.
-
 ```sh
-make format
-make lint
-make typecheck
-make test
-make check
+make format   -- format code
+make lint     -- lint code
+make typecheck -- run LuaCATS type check
+make test     -- run tests
+make check    -- run all of the above
 ```
+
+The project uses LuaCATS annotations for all public configuration, callbacks, and internal data structures. `.luarc.json` configures editor diagnostics; `make typecheck` includes the current Neovim runtime types and checks the whole workspace.
