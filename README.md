@@ -1,5 +1,7 @@
 # translate.nvim
 
+English | [中文](README.zh.md)
+
 Enhance Neovim's LSP Hover with generic LLM APIs.
 
 The current development focus is the `gK` bilingual Hover: original type hints display immediately, and the LLM translation is appended to the same floating window once ready. The plugin does not integrate GitHub Copilot, nor does it connect to Google, Bing, DeepL, or other standalone translation services.
